@@ -33,9 +33,7 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+
 
 const database = getDatabase();
 const storage = firebase.storage(); // Ottieni l'istanza del modulo Storage
@@ -58,7 +56,7 @@ const RegistrazioneAttivitaScreen = () => {
  
 
   const [openFileSelector, { filesContent, loading }] = useFilePicker({
-    accept: ".pdf",
+    accept: ".png"
   });
 
   if (loading) {

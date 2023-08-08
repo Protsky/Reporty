@@ -8,11 +8,17 @@ const MainMenu = () => {
   const goToRegistrazioneAttivita = () => {
     navigation.navigate('RegistrazioneAttivita');
   };
+  const goToArchivio = () => {
+    navigation.navigate('Archivio');
+  };
 
   return (
     <View>
       <TouchableOpacity onPress={goToRegistrazioneAttivita}>
         <Text>Attività</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={goToArchivio}>
+        <Text>Archivio</Text>
       </TouchableOpacity>
     </View>
   );
