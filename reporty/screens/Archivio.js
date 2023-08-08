@@ -10,6 +10,8 @@ import { AntDesign } from "@expo/vector-icons";
 import firebase from "firebase/compat/app";
 import "firebase/compat/database";
 
+
+
 const firebaseConfig = {
   // Configurazione Firebase
 };
@@ -19,6 +21,10 @@ if (!firebase.apps.length) {
 }
 
 const ArchivioScreen = () => {
+ 
+
+  
+
   const [rapporti, setRapporti] = useState([]);
 
   useEffect(() => {
@@ -69,6 +75,7 @@ const ArchivioScreen = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>Archivio dei rapporti:</Text>
+
       {Object.keys(rapportiRaggruppatiPerSettimana).map(
         (settimanaKey, index) => (
           <View key={index}>
@@ -92,6 +99,13 @@ const ArchivioScreen = () => {
                 </View>
               )
             )}
+            <TouchableOpacity
+              style={styles.exportButton}
+              
+            >
+              <AntDesign name="pdffile1" size={24} color="#ffffff" />
+              <Text style={styles.exportButtonText}>Esporta PDF</Text>
+            </TouchableOpacity>
           </View>
         )
       )}
@@ -136,6 +150,23 @@ const styles = StyleSheet.create({
   orario: {
     fontSize: 16,
     color: "#888",
+  },
+  exportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#3498db",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginTop: 20,
+    elevation: 5,
+  },
+  exportButtonText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 10,
   },
 });
 
