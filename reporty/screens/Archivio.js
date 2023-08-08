@@ -76,12 +76,14 @@ const ArchivioScreen = () => {
             {rapportiRaggruppatiPerSettimana[settimanaKey].map(
               (rapporto, index) => (
                 <View style={styles.rapportoContainer} key={index}>
-                  <Text style={styles.attivita}>
-                    Attività: {rapporto.attivita}
-                  </Text>
-                  <Text style={styles.orario}>
-                    Orario: {rapporto.orario_inizio} - {rapporto.orario_fine}
-                  </Text>
+                  <View>
+                    <Text style={styles.attivita}>
+                      Attività: {rapporto.attivita}
+                    </Text>
+                    <Text style={styles.orario}>
+                      Orario: {rapporto.orario_inizio} - {rapporto.orario_fine}
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => handleDeleteRapporto(rapporto.id)}
                   >
@@ -130,6 +132,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 12,
+  },
+  orario: {
+    fontSize: 16,
+    color: "#888",
   },
 });
 
