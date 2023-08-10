@@ -15,6 +15,9 @@ const MainMenu = () => {
   const goToCosti = () => {
     navigation.navigate('Costi');
   };
+  const goToAgenda = () => {
+    navigation.navigate('Agenda');
+  };
 
   return (
     <View style={styles.container}>
@@ -29,6 +32,10 @@ const MainMenu = () => {
       <TouchableOpacity style={styles.button} onPress={goToCosti}>
         <Icon name="money" style={styles.icon} />
         <Text style={styles.buttonText}>Costi</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={goToAgenda}>
+        <Icon name="calendar" style={styles.icon} />
+        <Text style={styles.buttonText}>Agenda</Text>
       </TouchableOpacity>
     </View>
   );

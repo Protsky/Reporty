@@ -7,6 +7,7 @@ import HomeScreen from './screens/HomeScreen'; // La schermata principale
 import RegistrazioneAttivitaScreen from './screens/RegistrazioneAttivitaScreen'; // La schermata di registrazione delle attività
 import ArchivioScreen from './screens/Archivio';
 import CostiScreen from './screens/Costi';
+import AgendaScreen from './screens/Agenda';
 
 const Stack = createStackNavigator();
 
@@ -18,6 +19,7 @@ export default function App() {
         <Stack.Screen name="RegistrazioneAttivita" component={RegistrazioneAttivitaScreen} />
         <Stack.Screen name="Archivio" component={ArchivioScreen} />
         <Stack.Screen name="Costi" component={CostiScreen} />
+        <Stack.Screen name="Agenda" component={AgendaScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
