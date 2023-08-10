@@ -370,20 +370,7 @@ const AgendaScreen = () => {
 
   return (
     <div>
-      <Eventcalendar
-        view={viewSettings}
-        data={myEvents}
-        clickToCreate="double"
-        dragToCreate={true}
-        dragToMove={true}
-        dragToResize={true}
-        selectedDate={mySelectedDate}
-        onSelectedDateChange={onSelectedDateChange}
-        onEventClick={onEventClick}
-        onEventCreated={onEventCreated}
-        onEventDeleted={onEventDeleted}
-        onEventUpdated={onEventUpdated}
-      />
+      
       <Eventcalendar
             theme="windows" 
             themeVariant="light"
