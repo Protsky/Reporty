@@ -12,6 +12,9 @@ const MainMenu = () => {
   const goToArchivio = () => {
     navigation.navigate('Archivio');
   };
+  const goToCosti = () => {
+    navigation.navigate('Costi');
+  };
 
   return (
     <View style={styles.container}>
@@ -22,6 +25,10 @@ const MainMenu = () => {
       <TouchableOpacity style={styles.button} onPress={goToArchivio}>
         <Icon name="archive" style={styles.icon} />
         <Text style={styles.buttonText}>Archivio</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={goToCosti}>
+        <Icon name="money" style={styles.icon} />
+        <Text style={styles.buttonText}>Costi</Text>
       </TouchableOpacity>
     </View>
   );
