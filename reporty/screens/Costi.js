@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import firebase from "firebase/compat/app";
+
 import {
   Container,
   TextField,
@@ -20,6 +22,26 @@ import {
   GetApp,
 } from "@mui/icons-material";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyCJorBqsG0xTm9unbxnj6NLtb1WWTgL3BE",
+  authDomain: "reporty-b66fa-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "reporty-b66fa",
+  storageBucket: "reporty-b66fa.appspot.com",
+  messagingSenderId: "504973056130",
+  appId: "1:504973056130:web:f5f21a9855d89618907c9b",
+  measurementId: "G-1SH61TVL1V",
+  databaseURL:
+    "https://reporty-b66fa-default-rtdb.europe-west1.firebasedatabase.app",
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+const database = firebase.database();
+
+
+
 const Costi = () => {
   const [costi, setCosti] = useState([]);
   const [nuovoCosto, setNuovoCosto] = useState({
@@ -31,6 +53,24 @@ const Costi = () => {
   });
   const [mese, setMese] = useState("");
   const [visualizzaMese, setVisualizzaMese] = useState("Tutti i mesi");
+  const [costoEliminato, setCostoEliminato] = useState(false);
+
+
+  useEffect(() => {
+    const costiRef = database.ref("costi");
+    costiRef.on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const costiArray = Object.entries(data).map(([key, value]) => ({
+          key, // Aggiungi la chiave dell'elemento
+          ...value,
+        }));
+        setCosti(costiArray);
+      }
+    });
+
+    return () => costiRef.off("value");
+  }, []);
 
   const gestisciCambioNome = (evento) => {
     setNuovoCosto({ ...nuovoCosto, nome: evento.target.value });
@@ -44,23 +84,42 @@ const Costi = () => {
     setNuovoCosto({ ...nuovoCosto, descrizione: evento.target.value });
   };
 
-  const gestisciAggiuntaCosto = () => {
-    if (nuovoCosto.nome && nuovoCosto.prezzo > 0) {
-      setCosti([...costi, { ...nuovoCosto }]);
+  const handleAddCosto = () => {
+    const { nome, prezzo, descrizione, mese } = nuovoCosto; // Destructure values from nuovoCosto
+
+    if (nome && prezzo && mese) {
+      const nuovoCostoItem = {
+        nome: nome,
+        prezzo: parseFloat(prezzo),
+        descrizione: descrizione,
+        mese: mese, // Aggiungi il mese qui
+      };
+
+      const costiRef = database.ref("costi");
+      costiRef.push(nuovoCostoItem);
+
       setNuovoCosto({
         nome: "",
         prezzo: 0,
-        mese,
+        mese: "",
         descrizione: "",
         giustificativo: null,
       });
     }
   };
 
-  const gestisciEliminaCosto = (indice) => {
-    const costiAggiornati = costi.filter((_, i) => i !== indice);
-    setCosti(costiAggiornati);
+  const gestisciEliminaCosto = (indice, costoKey) => {
+    const costiRef = database.ref("costi");
+  
+    // Rimuovi l'elemento dal database Firebase utilizzando la chiave
+    costiRef.child(costoKey).remove();
+  
+    // Aggiorna la lista dei costi localmente escludendo l'elemento eliminato
+    const updatedCosti = costi.filter((costo) => costo.key !== costoKey);
+    setCosti(updatedCosti);
   };
+  
+  
 
   const costoTotale = costi
     .filter(
@@ -137,7 +196,7 @@ const Costi = () => {
           <Button
             variant="contained"
             startIcon={<AddCircleOutline />}
-            onClick={gestisciAggiuntaCosto}
+            onClick={handleAddCosto}
           >
             Aggiungi Costo
           </Button>
@@ -169,17 +228,21 @@ const Costi = () => {
               <ListItem key={indice}>
                 <ListItemText primary={`${costo.nome}: CHF ${costo.prezzo}`} />
                 <ListItemSecondaryAction>
-                  <IconButton onClick={() => gestisciEliminaCosto(indice)}>
+                  <IconButton
+                    onClick={() => gestisciEliminaCosto(indice, costo.key)}
+                  >
                     <Delete />
                   </IconButton>
                   <IconButton>
                     <GetApp />
                   </IconButton>
                   
+                
                 </ListItemSecondaryAction>
               </ListItem>
             ))}
         </List>
+
         <Typography variant="body1">
           Totale Costi Mensili: CHF {costoTotale}
         </Typography>
