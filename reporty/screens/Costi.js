@@ -41,9 +41,9 @@ if (!firebase.apps.length) {
 const database = firebase.database();
 
 
-
 const Costi = () => {
   const [costi, setCosti] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [nuovoCosto, setNuovoCosto] = useState({
     nome: "",
     prezzo: 0,
@@ -53,8 +53,13 @@ const Costi = () => {
   });
   const [mese, setMese] = useState("");
   const [visualizzaMese, setVisualizzaMese] = useState("Tutti i mesi");
-  const [costoEliminato, setCostoEliminato] = useState(false);
-
+  const handleDownload = (downloadURL) => {
+    const link = document.createElement("a");
+    link.href = downloadURL;
+    link.target = "_blank"; // Apri il link in una nuova finestra/tab
+    link.download = "giustificativo.pdf"; // Modifica l'estensione del file se necessario
+    link.click();
+  };
 
   useEffect(() => {
     const costiRef = database.ref("costi");
@@ -84,41 +89,78 @@ const Costi = () => {
     setNuovoCosto({ ...nuovoCosto, descrizione: evento.target.value });
   };
 
-  const handleAddCosto = () => {
-    const { nome, prezzo, descrizione, mese } = nuovoCosto; // Destructure values from nuovoCosto
-
+  const handleAddCosto = async () => {
+    const { nome, prezzo, descrizione, mese } = nuovoCosto;
+  
     if (nome && prezzo && mese) {
-      const nuovoCostoItem = {
-        nome: nome,
-        prezzo: parseFloat(prezzo),
-        descrizione: descrizione,
-        mese: mese, // Aggiungi il mese qui
-      };
-
-      const costiRef = database.ref("costi");
-      costiRef.push(nuovoCostoItem);
-
-      setNuovoCosto({
-        nome: "",
-        prezzo: 0,
-        mese: "",
-        descrizione: "",
-        giustificativo: null,
-      });
+      try {
+        const storageRef = firebase.storage().ref();
+        const fileRef = storageRef.child(selectedFile.name);
+  
+        // Carica il file su Firebase Storage
+        await fileRef.put(selectedFile);
+  
+        // Ottieni l'URL del file appena caricato
+        const downloadURL = await fileRef.getDownloadURL();
+  
+        const nuovoCostoItem = {
+          nome: nome,
+          prezzo: parseFloat(prezzo),
+          descrizione: descrizione,
+          mese: mese,
+          giustificativo: downloadURL, // Aggiungi l'URL come giustificativo
+        };
+  
+        const costiRef = database.ref("costi");
+        costiRef.push(nuovoCostoItem);
+  
+        setNuovoCosto({
+          nome: "",
+          prezzo: 0,
+          mese: "",
+          descrizione: "",
+          giustificativo: null,
+        });
+  
+      } catch (error) {
+        console.error("Errore durante il caricamento del file:", error);
+      }
     }
   };
+  
 
   const gestisciEliminaCosto = (indice, costoKey) => {
     const costiRef = database.ref("costi");
-  
+
     // Rimuovi l'elemento dal database Firebase utilizzando la chiave
     costiRef.child(costoKey).remove();
-  
+
     // Aggiorna la lista dei costi localmente escludendo l'elemento eliminato
     const updatedCosti = costi.filter((costo) => costo.key !== costoKey);
     setCosti(updatedCosti);
   };
+
+  const handleFileChange = async (file) => {
+    setSelectedFile(file);
   
+    if (file) {
+      try {
+        const storageRef = firebase.storage().ref();
+        const fileRef = storageRef.child(file.name);
+        
+        // Carica il file su Firebase Storage
+        await fileRef.put(file);
+        
+        // Ottieni l'URL del file appena caricato
+        const downloadURL = await fileRef.getDownloadURL();
+        
+        // Puoi fare altro con l'URL, ad esempio salvarlo nel database Firebase
+        console.log("URL del file:", downloadURL);
+      } catch (error) {
+        console.error("Errore durante il caricamento del file:", error);
+      }
+    }
+  };
   
 
   const costoTotale = costi
@@ -187,12 +229,21 @@ const Costi = () => {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton>
-                    <AttachFile />
+                    <label htmlFor="fileInput">
+                      <AttachFile />
+                    </label>
                   </IconButton>
                 </InputAdornment>
               ),
             }}
           />
+          <input
+            id="fileInput"
+            type="file"
+            style={{ display: "none" }}
+            onChange={(e) => handleFileChange(e.target.files[0])}
+          />
+
           <Button
             variant="contained"
             startIcon={<AddCircleOutline />}
@@ -233,11 +284,9 @@ const Costi = () => {
                   >
                     <Delete />
                   </IconButton>
-                  <IconButton>
+                  <IconButton onClick={() => handleDownload(costo.giustificativo)}>
                     <GetApp />
                   </IconButton>
-                  
-                
                 </ListItemSecondaryAction>
               </ListItem>
             ))}
