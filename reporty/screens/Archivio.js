@@ -85,7 +85,7 @@ const ArchivioScreen = () => {
                 <View style={styles.rapportoContainer} key={index}>
                   <View>
                     <Text style={styles.attivita}>
-                      Attività: {rapporto.attivita}
+                      {rapporto.attivita}
                     </Text>
                     <Text style={styles.orario}>
                       Orario: {rapporto.orario_inizio} - {rapporto.orario_fine}
@@ -99,13 +99,7 @@ const ArchivioScreen = () => {
                 </View>
               )
             )}
-            <TouchableOpacity
-              style={styles.exportButton}
-              
-            >
-              <AntDesign name="pdffile1" size={24} color="#ffffff" />
-              <Text style={styles.exportButtonText}>Esporta PDF</Text>
-            </TouchableOpacity>
+            
           </View>
         )
       )}
