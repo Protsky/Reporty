@@ -108,7 +108,7 @@ const ArchivioScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  ontainer: {
     padding: 16,
     backgroundColor: "#f0f0f0",
   },
@@ -117,16 +117,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
   },
-  dataHeader: {
-    fontSize: 18,
+  settimanaHeader: {
+    fontSize: 15,
     fontWeight: "bold",
     marginTop: 16,
+    marginBottom:10
   },
   rapportoContainer: {
     backgroundColor: "#fff",
     borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+    padding: 8, // Adjusted padding
+    marginBottom: 8, // Adjusted margin
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -137,30 +138,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   attivita: {
-    fontSize: 18,
+    fontSize: 16, // Adjusted font size
     fontWeight: "bold",
-    marginBottom: 12,
+    marginBottom: 8, // Adjusted margin
   },
   orario: {
-    fontSize: 16,
+    fontSize: 14, // Adjusted font size
     color: "#888",
-  },
-  exportButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#3498db",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginTop: 20,
-    elevation: 5,
-  },
-  exportButtonText: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginLeft: 10,
   },
 });
 
