@@ -48,6 +48,10 @@ const ArchivioScreen = () => {
     const onejan = new Date(date.getFullYear(), 0, 1);
     return Math.ceil(((date - onejan) / 86400000 + onejan.getDay() + 1) / 7);
   };
+  const getDayOfWeek = (date) => {
+    const daysOfWeek = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+    return daysOfWeek[date.getDay()];
+  };
 
   const raggruppaRapportiPerSettimana = (rapporti) => {
     const rapportiPerSettimana = {};
@@ -88,7 +92,7 @@ const ArchivioScreen = () => {
                       {rapporto.attivita}
                     </Text>
                     <Text style={styles.orario}>
-                      Orario: {rapporto.orario_inizio} - {rapporto.orario_fine}
+                      {getDayOfWeek(new Date(rapporto.data))} - Orario: {rapporto.orario_inizio} - {rapporto.orario_fine}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -99,7 +103,6 @@ const ArchivioScreen = () => {
                 </View>
               )
             )}
-            
           </View>
         )
       )}
