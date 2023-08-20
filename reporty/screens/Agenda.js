@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import firebase from "firebase/compat/app";
+import { useEffect } from "react";
+
 import {
   View,
   Text,
@@ -8,6 +11,24 @@ import {
   TextInput,
   Picker,
 } from "react-native";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCJorBqsG0xTm9unbxnj6NLtb1WWTgL3BE",
+  authDomain: "reporty-b66fa-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "reporty-b66fa",
+  storageBucket: "reporty-b66fa.appspot.com",
+  messagingSenderId: "504973056130",
+  appId: "1:504973056130:web:f5f21a9855d89618907c9b",
+  measurementId: "G-1SH61TVL1V",
+  databaseURL:
+    "https://reporty-b66fa-default-rtdb.europe-west1.firebasedatabase.app",
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+const database = firebase.database();
 
 const AgendaScreen = () => {
   const [appointments, setAppointments] = useState([]);
@@ -48,6 +69,23 @@ const AgendaScreen = () => {
       };
       setAppointments([...appointments, newAppointment]);
     }
+
+    const appointmentData = {
+      name,
+      description,
+      tag: selectedTag,
+      dateTime: new Date(startDate + " " + startTime).toISOString(),
+      endTime: new Date(startDate + " " + endTime).toISOString(),
+    };
+
+    if (editAppointmentId !== null) {
+      // Editing existing appointment
+      database.ref(`appointments/${editAppointmentId}`).set(appointmentData);
+    } else {
+      // Adding new appointment
+      database.ref("appointments").push(appointmentData);
+    }
+
     // Clear input fields
     setName("");
     setDescription("");
@@ -61,21 +99,59 @@ const AgendaScreen = () => {
     const appointment = appointments.find(
       (appointment) => appointment.id === id
     );
-    setName(appointment.name);
-    setDescription(appointment.description);
-    setSelectedTag(appointment.tag);
-    setStartDate(appointment.dateTime.toISOString().slice(0, 10));
-    setStartTime(appointment.dateTime.toISOString().slice(11, 16));
-    setEndTime(appointment.endTime.toISOString().slice(11, 16));
-    setEditAppointmentId(id);
+  
+    if (appointment) {
+      setName(appointment.name);
+      setDescription(appointment.description);
+      setSelectedTag(appointment.tag);
+  
+      // Convert appointment.dateTime and appointment.endTime to Date objects
+      const startDateTime = new Date(appointment.dateTime);
+      const endDateTime = new Date(appointment.endTime);
+  
+      setStartDate(startDateTime.toISOString().slice(0, 10));
+      setStartTime(startDateTime.toISOString().slice(11, 16));
+      setEndTime(endDateTime.toISOString().slice(11, 16));
+      setEditAppointmentId(id);
+    }
   };
+  
+  
+  
 
   const handleDeleteAppointment = (id) => {
+    // Remove from local state
     const updatedAppointments = appointments.filter(
       (appointment) => appointment.id !== id
     );
     setAppointments(updatedAppointments);
+  
+    // Remove from Firebase database
+    database.ref(`appointments/${id}`).remove();
   };
+  
+
+  useEffect(() => {
+    // This function will run when the component mounts
+    const appointmentsRef = database.ref("appointments");
+
+    // Set up a listener for changes in the appointments data
+    const appointmentsListener = appointmentsRef.on("value", (snapshot) => {
+      const appointmentsData = snapshot.val();
+      if (appointmentsData) {
+        const appointmentsArray = Object.keys(appointmentsData).map((key) => ({
+          id: key,
+          ...appointmentsData[key],
+        }));
+        setAppointments(appointmentsArray);
+      }
+    });
+
+    // Return a cleanup function to remove the listener when the component unmounts
+    return () => {
+      appointmentsRef.off("value", appointmentsListener);
+    };
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -98,9 +174,9 @@ const AgendaScreen = () => {
           onValueChange={(itemValue) => setSelectedTag(itemValue)}
         >
           <Picker.Item label="Select Tag" value="" />
-          <Picker.Item label="Personal" value="Personal" />
-          <Picker.Item label="Work" value="Work" />
-          <Picker.Item label="Study" value="Study" />
+          <Picker.Item label="Personale" value="Personale" />
+          <Picker.Item label="Esame" value="Esame" />
+          <Picker.Item label="Appuntamento" value="Appuntamento" />
           {/* Add more tags here */}
         </Picker>
         <TextInput
@@ -139,18 +215,17 @@ const AgendaScreen = () => {
               <Text style={styles.appointmentTag}>Tag: {appointment.tag}</Text>
             </View>
             <Text style={styles.appointmentDateTime}>
-              {appointment.dateTime.toLocaleDateString()} -{" "}
-              {appointment.dateTime.toLocaleTimeString([], {
+              {new Date(appointment.dateTime).toLocaleDateString()} -{" "}
+              {new Date(appointment.dateTime).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}{" "}
               to{" "}
-              {appointment.endTime.toLocaleTimeString([], {
+              {new Date(appointment.endTime).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
             </Text>
-
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => handleEditAppointment(appointment.id)}
