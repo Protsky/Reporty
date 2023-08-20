@@ -38,12 +38,6 @@ if (!firebase.apps.length) {
 const database = getDatabase();
 const storage = firebase.storage(); // Ottieni l'istanza del modulo Storage
 
-// Function to convert base64url to regular base64
-const base64UrlToBase64 = (base64Url) => {
-  const padding = '='.repeat((4 - (base64Url.length % 4)) % 4);
-  const base64 = (base64Url + padding).replace(/-/g, '+').replace(/_/g, '/');
-  return base64;
-};
 
 const RegistrazioneAttivitaScreen = () => {
   const [attivita, setAttivita] = useState("");
@@ -51,8 +45,7 @@ const RegistrazioneAttivitaScreen = () => {
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
-  const [uploadedFileUrl, setUploadedFileUrl] = useState("");
+ 
  
 
   const [openFileSelector, { filesContent, loading }] = useFilePicker({
@@ -63,9 +56,7 @@ const RegistrazioneAttivitaScreen = () => {
     return <div>Loading...</div>;
   }
 
-  const showDatePicker = () => {
-    setDatePickerVisibility(true);
-  };
+
 
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
