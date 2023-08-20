@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
 import firebase from "firebase/compat/app";
+import ReactDOM from "react-dom";
+import {
+  VictoryBar,
+  VictoryChart,
+  VictoryTheme,
+  VictoryAxis,
+  VictoryTooltip, // Make sure to add this import
+  VictoryVoronoiContainer, // Make sure to add this import
+} from "victory";
 
 import {
   Container,
@@ -34,12 +43,18 @@ const firebaseConfig = {
     "https://reporty-b66fa-default-rtdb.europe-west1.firebasedatabase.app",
 };
 
+const data = [
+  { quarter: 1, earnings: 13000 },
+  { quarter: 2, earnings: 16500 },
+  { quarter: 3, earnings: 14250 },
+  { quarter: 4, earnings: 19000 },
+];
+
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
 const database = firebase.database();
-
 
 const Costi = () => {
   const [costi, setCosti] = useState([]);
@@ -60,6 +75,7 @@ const Costi = () => {
     link.download = "giustificativo.pdf"; // Modifica l'estensione del file se necessario
     link.click();
   };
+  const [monthlyCosts, setMonthlyCosts] = useState({});
 
   useEffect(() => {
     const costiRef = database.ref("costi");
@@ -71,6 +87,18 @@ const Costi = () => {
           ...value,
         }));
         setCosti(costiArray);
+
+        // Calculate monthly costs
+        const monthlyCostsData = costiArray.reduce((acc, costo) => {
+          const { mese, prezzo } = costo;
+          if (!acc[mese]) {
+            acc[mese] = 0;
+          }
+          acc[mese] += prezzo;
+          return acc;
+        }, {});
+
+        setMonthlyCosts(monthlyCostsData);
       }
     });
 
@@ -91,18 +119,18 @@ const Costi = () => {
 
   const handleAddCosto = async () => {
     const { nome, prezzo, descrizione, mese } = nuovoCosto;
-  
+
     if (nome && prezzo && mese) {
       try {
         const storageRef = firebase.storage().ref();
         const fileRef = storageRef.child(selectedFile.name);
-  
+
         // Carica il file su Firebase Storage
         await fileRef.put(selectedFile);
-  
+
         // Ottieni l'URL del file appena caricato
         const downloadURL = await fileRef.getDownloadURL();
-  
+
         const nuovoCostoItem = {
           nome: nome,
           prezzo: parseFloat(prezzo),
@@ -110,10 +138,10 @@ const Costi = () => {
           mese: mese,
           giustificativo: downloadURL, // Aggiungi l'URL come giustificativo
         };
-  
+
         const costiRef = database.ref("costi");
         costiRef.push(nuovoCostoItem);
-  
+
         setNuovoCosto({
           nome: "",
           prezzo: 0,
@@ -121,13 +149,11 @@ const Costi = () => {
           descrizione: "",
           giustificativo: null,
         });
-  
       } catch (error) {
         console.error("Errore durante il caricamento del file:", error);
       }
     }
   };
-  
 
   const gestisciEliminaCosto = (indice, costoKey) => {
     const costiRef = database.ref("costi");
@@ -142,18 +168,18 @@ const Costi = () => {
 
   const handleFileChange = async (file) => {
     setSelectedFile(file);
-  
+
     if (file) {
       try {
         const storageRef = firebase.storage().ref();
         const fileRef = storageRef.child(file.name);
-        
+
         // Carica il file su Firebase Storage
         await fileRef.put(file);
-        
+
         // Ottieni l'URL del file appena caricato
         const downloadURL = await fileRef.getDownloadURL();
-        
+
         // Puoi fare altro con l'URL, ad esempio salvarlo nel database Firebase
         console.log("URL del file:", downloadURL);
       } catch (error) {
@@ -161,7 +187,6 @@ const Costi = () => {
       }
     }
   };
-  
 
   const costoTotale = costi
     .filter(
@@ -198,7 +223,7 @@ const Costi = () => {
             }}
             variant="outlined"
           >
-            <MenuItem value="Seleziona un mese">
+            <MenuItem value="">
               <em>Seleziona un mese</em>
             </MenuItem>
             {mesi.map((mese, index) => (
@@ -284,7 +309,9 @@ const Costi = () => {
                   >
                     <Delete />
                   </IconButton>
-                  <IconButton onClick={() => handleDownload(costo.giustificativo)}>
+                  <IconButton
+                    onClick={() => handleDownload(costo.giustificativo)}
+                  >
                     <GetApp />
                   </IconButton>
                 </ListItemSecondaryAction>
@@ -295,6 +322,37 @@ const Costi = () => {
         <Typography variant="body1">
           Totale Costi Mensili: CHF {costoTotale}
         </Typography>
+
+        <VictoryChart
+          // adding the material theme provided with Victory
+          theme={VictoryTheme.material}
+          width={800} // Adjust the width as needed
+          height={400} // Adjust the height as needed
+          domainPadding={{ x: 20 }} // Add padding to the x-axis
+          padding={{ top: 20, bottom: 50, left: 60, right: 20 }} // Add overall padding
+          containerComponent={
+            <VictoryVoronoiContainer // Use Voronoi container for better tooltips
+              labels={({ datum }) => `${mesi[datum.x - 1]}: CHF ${datum.y}`}
+              labelComponent={<VictoryTooltip style={{ fontSize: 10 }} />}
+            />
+          }
+        >
+          <VictoryAxis
+            tickValues={mesi.map((_, index) => index + 1)}
+            tickFormat={mesi}
+            style={{ tickLabels: { fontSize: 20, angle: 15 } }} // Adjust font size and angle
+          />
+          <VictoryAxis dependentAxis tickFormat={(x) => `CHF ${x}`} />
+          <VictoryBar
+            data={mesi.map((mese, index) => ({
+              x: mese, // Use the month name as the x-value
+              y: monthlyCosts[mese] || 0, // Get the corresponding y value for the month
+            }))}
+            x="x"
+            y="y"
+            style={{ data: { width: 15 } }} // Adjust the width of bars
+          />
+        </VictoryChart>
       </div>
     </Container>
   );
