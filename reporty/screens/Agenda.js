@@ -39,6 +39,13 @@ const AgendaScreen = () => {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [editAppointmentId, setEditAppointmentId] = useState(null);
+  // Separate archived and non-archived appointments
+  const nonArchivedAppointments = appointments.filter(
+    (appointment) => !appointment.archived
+  );
+  const archivedAppointments = appointments.filter(
+    (appointment) => appointment.archived
+  );
 
   const handleSaveAppointment = () => {
     if (editAppointmentId !== null) {
@@ -66,6 +73,7 @@ const AgendaScreen = () => {
         tag: selectedTag,
         dateTime: new Date(startDate + " " + startTime),
         endTime: new Date(startDate + " " + endTime),
+        archived: false, // Set archived to false by default
       };
       setAppointments([...appointments, newAppointment]);
     }
@@ -76,6 +84,7 @@ const AgendaScreen = () => {
       tag: selectedTag,
       dateTime: new Date(startDate + " " + startTime).toISOString(),
       endTime: new Date(startDate + " " + endTime).toISOString(),
+      archived: false, // Add the archived field
     };
 
     if (editAppointmentId !== null) {
@@ -99,25 +108,22 @@ const AgendaScreen = () => {
     const appointment = appointments.find(
       (appointment) => appointment.id === id
     );
-  
+
     if (appointment) {
       setName(appointment.name);
       setDescription(appointment.description);
       setSelectedTag(appointment.tag);
-  
+
       // Convert appointment.dateTime and appointment.endTime to Date objects
       const startDateTime = new Date(appointment.dateTime);
       const endDateTime = new Date(appointment.endTime);
-  
+
       setStartDate(startDateTime.toISOString().slice(0, 10));
       setStartTime(startDateTime.toISOString().slice(11, 16));
       setEndTime(endDateTime.toISOString().slice(11, 16));
       setEditAppointmentId(id);
     }
   };
-  
-  
-  
 
   const handleDeleteAppointment = (id) => {
     // Remove from local state
@@ -125,11 +131,27 @@ const AgendaScreen = () => {
       (appointment) => appointment.id !== id
     );
     setAppointments(updatedAppointments);
-  
+
     // Remove from Firebase database
     database.ref(`appointments/${id}`).remove();
   };
-  
+
+  const handleArchiveAppointment = (id) => {
+    const updatedAppointments = appointments.map((appointment) =>
+      appointment.id === id
+        ? {
+            ...appointment,
+            archived: !appointment.archived,
+          }
+        : appointment
+    );
+    setAppointments(updatedAppointments);
+
+    // Update the archived field in Firebase
+    database
+      .ref(`appointments/${id}/archived`)
+      .set(!appointments.find((appointment) => appointment.id === id).archived);
+  };
 
   useEffect(() => {
     // This function will run when the component mounts
@@ -205,7 +227,58 @@ const AgendaScreen = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.timelineContainer}>
-        {appointments.map((appointment) => (
+      <Text style={styles.sectionHeader}>Non-Archived Appointments:</Text>
+      {nonArchivedAppointments.map((appointment) => (
+        <View key={appointment.id} style={styles.appointmentItem}>
+          <View style={styles.appointmentInfo}>
+            <Text style={styles.appointmentName}>{appointment.name}</Text>
+            <Text style={styles.appointmentDescription}>
+              {appointment.description}
+            </Text>
+            <Text style={styles.appointmentTag}>Tag: {appointment.tag}</Text>
+          </View>
+          <Text style={styles.appointmentDateTime}>
+            {new Date(appointment.dateTime).toLocaleDateString()} -{" "}
+            {new Date(appointment.dateTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}{" "}
+            to{" "}
+            {new Date(appointment.endTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => handleEditAppointment(appointment.id)}
+          >
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteAppointment(appointment.id)}
+          >
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.archiveButton,
+              appointment.archived
+                ? styles.archiveButtonArchived
+                : styles.archiveButtonNotArchived,
+            ]}
+            onPress={() => handleArchiveAppointment(appointment.id)}
+          >
+            <Text style={styles.archiveButtonText}>
+              {appointment.archived ? "Unarchive" : "Archive"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+        <Text style={styles.sectionHeader}>Archived Appointments:</Text>
+        {archivedAppointments.map((appointment) => (
           <View key={appointment.id} style={styles.appointmentItem}>
             <View style={styles.appointmentInfo}>
               <Text style={styles.appointmentName}>{appointment.name}</Text>
@@ -238,14 +311,49 @@ const AgendaScreen = () => {
             >
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.archiveButton,
+                appointment.archived
+                  ? styles.archiveButtonArchived
+                  : styles.archiveButtonNotArchived,
+              ]}
+              onPress={() => handleArchiveAppointment(appointment.id)}
+            >
+              <Text style={styles.archiveButtonText}>
+                {appointment.archived ? "Unarchive" : "Archive"}
+              </Text>
+            </TouchableOpacity>
           </View>
         ))}
       </View>
+
+      
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  archiveButton: {
+    padding: 5,
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 10,
+    minWidth: 80,
+  },
+  archiveButtonArchived: {
+    backgroundColor: "#E74C3C",
+  },
+  archiveButtonNotArchived: {
+    backgroundColor: "#27AE60",
+  },
+  archiveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+
   container: {
     padding: 20,
   },
@@ -276,6 +384,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ccc",
     paddingTop: 20,
+  },
+  sectionHeader: {
+    fontWeight: "bold",
+    fontSize: 18,
+    marginTop: 10,
+    marginBottom: 5,
   },
   appointmentItem: {
     flexDirection: "row",
